@@ -1,0 +1,31 @@
+# commands.yaml
+
+linux:
+  - name: "ls"
+    command: "ls"
+    output_check: [ "file1.txt", "file2.txt" ]
+
+  - name: "grep"
+    command: "grep hello file1.txt"
+    output_check: [ "hello" ]
+
+  - name: "custom_command"
+    command: "echo Custom command"
+    output_check: [ "Custom" ]
+
+windows:
+
+  - name: "dir"
+    command: "dir"
+    output_check: [ "main.go" ]
+    commands:
+      - name: "stampa a video Ciao ciao ciao"
+        command: "echo ciao ciao ciao ciao"
+
+#  - name: "another_command_with_dependency"
+#    command: "echo Another Command with dependency"
+#    output_check: [ "another_dependency_check" ]
+#    commands:
+#      - name: "dependent_command2"
+#        command: "echo Dependent Command 2"
+#        output_check: [ "dep_check2" ]
