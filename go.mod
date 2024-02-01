@@ -1,4 +1,4 @@
-module enumerationLauncher
+module swissEnum
 
 go 1.21.6
 

@@ -3,25 +3,41 @@
 linux:
   - name: "ls"
     command: "ls"
-    output_check: [ "file1.txt", "file2.txt" ]
+    output_check:
+      - pattern: "file1.txt"
+        command: "grep"
+      - pattern: "file2.txt"
+        command: "grep"
+    commands:
+      - name: "grep"
+        command: "grep hello file1.txt"
+        output_check: ["hello"]
 
-  - name: "grep"
-    command: "grep hello file1.txt"
-    output_check: [ "hello" ]
-
-  - name: "custom_command"
-    command: "echo Custom command"
-    output_check: [ "Custom" ]
+      - name: "custom_command"
+        command: "echo Custom command"
+        output_check: ["Custom"]
 
 windows:
-
   - name: "dir"
     command: "dir"
-    output_check: [ "main.go" ]
+    output_checks:
+      - pattern: 'main.go'
+        command_name: "subcommand1"
+      - pattern: 'go.mod'
+        command_name: 'subcommand2'
     commands:
-      - name: "stampa a video Ciao ciao ciao"
-        command: "echo ciao ciao ciao ciao"
+      - name: "subcommand1"
+        command: "echo trovato main.go"
 
+      - name: "subcommand2"
+        command: "echo trovato go.mod"
+  - name: "secondDir"
+    command: "dir"
+    commands:
+      - name: "alterEgo"
+        command: "echo trovato main.go"
+      - name: "alterEgoDuo"
+        command: "echo trovato go.mod"
 #  - name: "another_command_with_dependency"
 #    command: "echo Another Command with dependency"
 #    output_check: [ "another_dependency_check" ]
