@@ -1,47 +1,50 @@
-# commands.yaml
-
-linux:
-  - name: "ls"
-    command: "ls"
-    output_check:
-      - pattern: "file1.txt"
-        command: "grep"
-      - pattern: "file2.txt"
-        command: "grep"
+categories:
+  - name: "linux"
     commands:
-      - name: "grep"
-        command: "grep hello file1.txt"
-        output_check: ["hello"]
+      - name: "ls"
+        command: "ls"
+        output_check:
+          - pattern: "file1.txt"
+            command_name: "grep"
+          - pattern: "file2.txt"
+            command_name: "grep"
+        commands:
+          - name: "grep"
+            command: "grep hello file1.txt"
+            output_check: ["hello"]
+          - name: "custom_command"
+            command: "echo Custom command"
+            output_check: ["Custom"]
 
-      - name: "custom_command"
-        command: "echo Custom command"
-        output_check: ["Custom"]
-
-windows:
-  - name: "dir"
-    command: "dir"
-    output_checks:
-      - pattern: 'main.go'
-        command_name: "subcommand1"
-      - pattern: 'go.mod'
-        command_name: 'subcommand2'
+  - name: "windows"
     commands:
-      - name: "subcommand1"
-        command: "echo trovato main.go"
-
-      - name: "subcommand2"
-        command: "echo trovato go.mod"
-  - name: "secondDir"
-    command: "dir"
-    commands:
-      - name: "alterEgo"
-        command: "echo trovato main.go"
-      - name: "alterEgoDuo"
-        command: "echo trovato go.mod"
-#  - name: "another_command_with_dependency"
-#    command: "echo Another Command with dependency"
-#    output_check: [ "another_dependency_check" ]
-#    commands:
-#      - name: "dependent_command2"
-#        command: "echo Dependent Command 2"
-#        output_check: [ "dep_check2" ]
+      - name: "nmap"
+        standalone: true
+        command: "sudo nmap -A -v -sT -sV -disable-arp-ping -D 5 -p- {{.Domain}}"
+        output_checks:
+          - pattern: 'open port 53/tcp' 
+            command_name: "dns_transfer"
+          - pattern: 'open port 389/tcp'
+            command_name: 'ldap'
+          - pattern: 'open port 445/tcp'
+            command_name: 'smb'
+          - pattern: 'open port 139/tcp'
+            command_name: 'rpc'
+          - pattern: 'open port 88/tcp'
+            command_name: 'kerbrute'
+        commands:
+          - name: "dns_transfer"
+            command: "dig axfr {{.Domain}} @{{.Domain}}"
+            standalone: false
+          - name: "ldap"
+            command: "ldapsearch -x -H ldap://{{.IP}} -s base"
+            standalone: false
+          - name: "smb"
+            command: "smbclient --no-pass -L //{{.IP}}"
+            standalone: false
+          - name: "rpc"
+            command: "rpcclient -U '' -N {{.IP}}"
+            standalone: false
+          - name: "kerbrute"
+            command: "kerbrute userenum -d {{.Domain}} /home/nothing/Scrivania/wordlist/SecList/Usernames/xato-net-10-million-usernames.txt --dc {{.Domain}}"
+            standalone: false

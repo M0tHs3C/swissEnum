@@ -25,14 +25,19 @@ type OutputCheck struct {
 	CommandName string `yaml:"command_name"`
 }
 
+type Category struct {
+	Name     string
+	Commands []Command
+}
+
 type Config struct {
-	Windows []Command
+	Categories []Category `yaml:"categories"`
 }
 
 var (
-	ip     = flag.String("ip", "", "Indirizzo IP")
-	domain = flag.String("dc", "", "Dominio")
-	osType = flag.String("os", "", "Sistema Operativo (linux o windows)")
+	ip     = flag.String("ip", "", "IP address")
+	domain = flag.String("dc", "", "Domain")
+	osType = flag.String("os", "", "Operating System (linux or windows)")
 )
 
 func main() {
@@ -45,16 +50,16 @@ func main() {
 
 	config, err := readConfig("commands.yaml")
 	if err != nil {
-		fmt.Printf("Errore nella lettura del file di configurazione: %v\n", err)
+		fmt.Printf("Error reading configuration file: %v\n", err)
 		os.Exit(1)
 	}
 
 	var commands []Command
-	if *osType == "windows" {
-		commands = config.Windows
-	} else {
-		fmt.Println("Sistema operativo non supportato.")
-		os.Exit(1)
+	for _, category := range config.Categories {
+		if category.Name == *osType {
+			commands = category.Commands
+			break
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -65,21 +70,21 @@ func main() {
 	}
 
 	wg.Wait()
-	fmt.Printf("[%s] Completato l'esecuzione di tutti i comandi.\n", color.GreenString("!"))
+	fmt.Printf("[%s] Execution of all commands completed.\n", color.GreenString("!"))
 }
 
 func executeCommand(command *Command, ip, domain string, wg *sync.WaitGroup, indent int) {
 	defer wg.Done()
 
-	cmdStr := command.Command
+	fmt.Printf("%s[%s] Executing %s...\n", strings.Repeat("  ", indent), color.YellowString("!"), command.Name)
 
-	fmt.Printf("%s[%s] Esecuzione di %s...\n", strings.Repeat("  ", indent), color.YellowString("!"), command.Name)
+	cmdStr := replaceVariables(command.Command, ip, domain)
 
 	cmd := exec.Command("bash", "-c", cmdStr)
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		fmt.Printf("%s[%s] Errore nell'esecuzione di %s: %v\n", strings.Repeat("  ", indent), color.RedString("X"), command.Name, err)
+		fmt.Printf("%s[%s] Error executing %s: %v\n", strings.Repeat("  ", indent), color.RedString("X"), command.Name, err)
 		return
 	}
 
@@ -87,7 +92,7 @@ func executeCommand(command *Command, ip, domain string, wg *sync.WaitGroup, ind
 	err = ioutil.WriteFile(fileName, output, 0644)
 
 	if err != nil {
-		fmt.Printf("%s[%s] Errore nel salvataggio di %s in %s: %v\n", strings.Repeat("  ", indent), color.RedString("X"), command.Name, fileName, err)
+		fmt.Printf("%s[%s] Error saving %s to %s: %v\n", strings.Repeat("  ", indent), color.RedString("X"), command.Name, fileName, err)
 		return
 	}
 
@@ -104,7 +109,7 @@ func executeCommand(command *Command, ip, domain string, wg *sync.WaitGroup, ind
 		}
 	}
 
-	fmt.Printf("%s[%s] Completato %s. Risultato salvato in %s\n", strings.Repeat("  ", indent), color.GreenString("✔"), command.Name, fileName)
+	fmt.Printf("%s[%s] Completed %s. Result saved to %s\n", strings.Repeat("  ", indent), color.GreenString("✔"), command.Name, fileName)
 
 	for i := range command.Commands {
 		wg.Add(1)
@@ -130,4 +135,10 @@ func readConfig(filePath string) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+func replaceVariables(command string, ip, domain string) string {
+	command = strings.ReplaceAll(command, "{{.IP}}", ip)
+	command = strings.ReplaceAll(command, "{{.Domain}}", domain)
+	return command
 }
