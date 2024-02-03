@@ -44,7 +44,7 @@ func main() {
 	flag.Parse()
 
 	if *ip == "" || *domain == "" || (*osType != "linux" && *osType != "windows") {
-		fmt.Println("Usage: go run main.go -ip <ip> -dc <domain> -os <linux/windows>")
+		fmt.Println("Usage: swissEnum -ip <ip> -dc <domain> -os <linux/windows>")
 		os.Exit(1)
 	}
 
